@@ -760,6 +760,42 @@ saveData(DB);
 
 let currentUser = null;
 let currentRole = null;
+let navHistory = []; // تاريخ التنقل للرجوع
+
+// ═══════════════════════════════════════
+// SESSION PERSISTENCE
+// ═══════════════════════════════════════
+const SESSION_KEY = 'beeji_session';
+function saveSession(role,userId){ localStorage.setItem(SESSION_KEY,JSON.stringify({role,userId,ts:Date.now()})); }
+function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+function restoreSession(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SESSION_KEY));
+    if(!s) return false;
+    if(Date.now()-s.ts > 30*24*60*60*1000){ clearSession(); return false; }
+    if(s.role==='admin'){
+      const u=DB.admins.find(a=>a.id===s.userId);
+      if(!u) return false;
+      currentUser=u; currentRole='admin';
+      showPage('adminDash'); showAdminSec('home'); checkMobile(); return true;
+    } else if(s.role==='teacher'){
+      const u=DB.teachers.find(t=>t.id===s.userId);
+      if(!u||!u.active) return false;
+      currentUser=u; currentRole='teacher';
+      showPage('teacherDash'); showTeacherSec('home');
+      if(window.innerWidth<=640) document.getElementById('bottomNavT').style.display='block';
+      return true;
+    } else if(s.role==='student'){
+      const u=DB.students.find(s2=>s2.id===s.userId);
+      if(!u||!u.active) return false;
+      currentUser=u; currentRole='student';
+      showPage('studentDash'); showStudentSec('home');
+      if(window.innerWidth<=640) document.getElementById('bottomNavSt').style.display='block';
+      return true;
+    }
+  } catch(e){}
+  return false;
+}
 
 const SURAHS = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"];
 
@@ -773,7 +809,7 @@ const SURAHS = ["الفاتحة","البقرة","آل عمران","النساء"
 function hideSplash(){
   const s=document.getElementById('splash');
   s.style.transition='opacity 0.5s'; s.style.opacity='0';
-  setTimeout(()=>{ s.style.display='none'; showLogin(); },500);
+  setTimeout(()=>{ s.style.display='none'; if(!restoreSession()) showLogin(); },500);
 }
 
 // ═══════════════════════════════════════
@@ -789,11 +825,61 @@ function showLogin(){ showPage('loginPage'); }
 
 function logout(){
   if(!confirm('هل تريد تسجيل الخروج؟')) return;
-  currentUser=null; currentRole=null;
+  currentUser=null; currentRole=null; navHistory=[];
+  clearSession();
   showLogin();
   ['adminLoginForm','teacherLoginForm','studentSection'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
   clearMsg();
+}
+
+// ─── Back Button Handler ───
+window.addEventListener('popstate', ()=>{
+  // إذا كان هناك تاريخ تنقل → ارجع للصفحة السابقة
+  if(navHistory.length > 1){
+    navHistory.pop(); // أزل الصفحة الحالية
+    const prev = navHistory[navHistory.length-1];
+    if(prev){
+      if(currentRole==='admin') showAdminSecNoHistory(prev);
+      else if(currentRole==='teacher') showTeacherSecNoHistory(prev);
+      else if(currentRole==='student') showStudentSecNoHistory(prev);
+    }
+  } else if(currentRole){
+    // لا يوجد تاريخ → اذهب للرئيسية بدل الخروج
+    history.pushState(null,'',location.href);
+    if(currentRole==='admin') showAdminSecNoHistory('home');
+    else if(currentRole==='teacher') showTeacherSecNoHistory('home');
+    else showStudentSecNoHistory('home');
+    navHistory=['home'];
+  } else {
+    history.pushState(null,'',location.href);
+  }
+});
+
+// دفع حالة في التاريخ عند كل تنقل
+function pushNav(sec){
+  navHistory.push(sec);
+  history.pushState({sec}, '', location.href);
+}
+
+// نسخ showAdminSec بدون تسجيل تاريخ (للرجوع)
+function showAdminSecNoHistory(sec){
+  document.querySelectorAll('#navbar .nav-item').forEach(el=>el.classList.toggle('active',el.id==='an-'+sec));
+  const el=document.getElementById('adminContent');
+  el.style.opacity='0';
+  setTimeout(()=>{ el.innerHTML=buildAdminSec(sec); el.style.transition='opacity 0.3s'; el.style.opacity='1'; },150);
+}
+function showTeacherSecNoHistory(sec){
+  ['home','halqa','schedule','notify','requests'].forEach(s=>{ const el=document.getElementById('tn-'+s); if(el) el.classList.toggle('active',s===sec); });
+  const el=document.getElementById('teacherContent');
+  el.style.opacity='0';
+  setTimeout(()=>{ el.innerHTML=buildTeacherSec(sec); el.style.opacity='1'; },150);
+}
+function showStudentSecNoHistory(sec){
+  ['home','progress','schedule','teachers','notifications'].forEach(s=>{ const el=document.getElementById('sn-'+s); if(el) el.classList.toggle('active',s===sec); });
+  const el=document.getElementById('studentContent');
+  el.style.opacity='0';
+  setTimeout(()=>{ el.innerHTML=buildStudentSec(sec); el.style.opacity='1'; },150);
 }
 
 function selectRole(role){
@@ -819,7 +905,7 @@ function adminLogin(){
   const email=document.getElementById('adminEmail').value.trim();
   const pin=document.getElementById('adminPin').value.trim();
   const admin=DB.admins.find(a=>a.email===email&&a.pin===pin);
-  if(admin){ currentUser=admin; currentRole='admin'; showPage('adminDash'); showAdminSec('home'); checkMobile(); }
+  if(admin){ currentUser=admin; currentRole='admin'; saveSession('admin',admin.id); navHistory=[]; history.pushState(null,'',location.href); showPage('adminDash'); showAdminSec('home'); checkMobile(); }
   else{ showMsg('❌ البريد أو الرمز غير صحيح'); document.getElementById('adminPin').value=''; }
 }
 
@@ -830,6 +916,7 @@ function teacherLogin(){
   if(teacher){
     if(!teacher.active){ showMsg('❌ حسابك موقوف. تواصل مع الإدارة'); return; }
     currentUser=teacher; currentRole='teacher';
+    saveSession('teacher',teacher.id); navHistory=[]; history.pushState(null,'',location.href);
     showPage('teacherDash'); showTeacherSec('home');
     if(window.innerWidth<=640) document.getElementById('bottomNavT').style.display='block';
   } else { showMsg('❌ اسم المستخدم أو كلمة المرور غير صحيحة'); }
@@ -844,6 +931,7 @@ function studentLogin(){
     currentUser=st; currentRole='student';
     st.lastLogin=new Date().toISOString().split('T')[0];
     saveData(DB);
+    saveSession('student',st.id); navHistory=[]; history.pushState(null,'',location.href);
     showPage('studentDash'); showStudentSec('home');
     if(window.innerWidth<=640) document.getElementById('bottomNavSt').style.display='block';
   } else { showMsg('❌ اسم المستخدم أو كلمة المرور غير صحيحة'); }
@@ -866,10 +954,8 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 // ADMIN SECTIONS
 // ═══════════════════════════════════════
 function showAdminSec(sec){
-  document.querySelectorAll('#navbar .nav-item').forEach(el=>el.classList.toggle('active',el.id==='an-'+sec));
-  const el=document.getElementById('adminContent');
-  el.style.opacity='0';
-  setTimeout(()=>{ el.innerHTML=buildAdminSec(sec); el.style.transition='opacity 0.3s'; el.style.opacity='1'; },150);
+  pushNav(sec);
+  showAdminSecNoHistory(sec);
 }
 function buildAdminSec(sec){
   switch(sec){
@@ -1221,13 +1307,8 @@ function buildAdminSettings(){
 // TEACHER SECTIONS
 // ═══════════════════════════════════════
 function showTeacherSec(sec){
-  ['home','halqa','schedule','notify','requests'].forEach(s=>{
-    const el=document.getElementById('tn-'+s);
-    if(el) el.classList.toggle('active',s===sec);
-  });
-  const el=document.getElementById('teacherContent');
-  el.style.opacity='0';
-  setTimeout(()=>{ el.innerHTML=buildTeacherSec(sec); el.style.opacity='1'; },150);
+  pushNav(sec);
+  showTeacherSecNoHistory(sec);
 }
 function buildTeacherSec(sec){
   switch(sec){
@@ -1388,13 +1469,8 @@ function buildTeacherRequests(){
 // STUDENT SECTIONS
 // ═══════════════════════════════════════
 function showStudentSec(sec){
-  ['home','progress','schedule','teachers','notifications'].forEach(s=>{
-    const el=document.getElementById('sn-'+s);
-    if(el) el.classList.toggle('active',s===sec);
-  });
-  const el=document.getElementById('studentContent');
-  el.style.opacity='0';
-  setTimeout(()=>{ el.innerHTML=buildStudentSec(sec); el.style.opacity='1'; },150);
+  pushNav(sec);
+  showStudentSecNoHistory(sec);
 }
 function buildStudentSec(sec){
   switch(sec){
@@ -2017,7 +2093,7 @@ let deferredPrompt;
 window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); deferredPrompt=e; document.getElementById('installBanner').classList.remove('hidden'); });
 document.getElementById('installBtn')?.addEventListener('click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; document.getElementById('installBanner').classList.add('hidden'); } });
 window.addEventListener('appinstalled',()=>{ document.getElementById('installBanner').classList.add('hidden'); });
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
 
 // ENTER KEY
 document.addEventListener('keydown',e=>{
