@@ -104,6 +104,20 @@ body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(
 .nav-item:hover,.nav-item.active{color:var(--gold-light);border-bottom-color:var(--gold);}
 .nav-logout{flex-shrink:0;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.8);border:1px solid rgba(255,255,255,0.15);cursor:pointer;font-size:13px;font-weight:600;font-family:'Cairo',sans-serif;transition:all 0.25s;margin-right:auto;}
 .nav-logout:hover{background:rgba(192,57,43,0.45);color:white;}
+.nav-news-icon{flex-shrink:0;position:relative;width:38px;height:38px;border-radius:10px;background:rgba(201,168,76,0.15);color:var(--gold-light);border:1px solid rgba(201,168,76,0.3);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all 0.25s;margin:0 4px;}
+.nav-news-icon:hover{background:rgba(201,168,76,0.3);transform:translateY(-1px);}
+.news-badge{position:absolute;top:-4px;right:-4px;background:var(--red);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:900;display:none;align-items:center;justify-content:center;border:2px solid var(--green-deep);}
+.news-badge.show{display:flex;}
+/* News Sliding Panel */
+#newsPanelOverlay{display:none;position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.5);backdrop-filter:blur(3px);}
+#newsPanelOverlay.open{display:block;}
+#newsPanel{position:fixed;top:0;right:0;height:100vh;width:min(420px,100vw);background:var(--cream);z-index:801;transform:translateX(100%);transition:transform 0.35s cubic-bezier(.4,0,.2,1);overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,0.3);}
+#newsPanel.open{transform:translateX(0);}
+.news-panel-header{background:linear-gradient(135deg,var(--green-deep),var(--green-dark));padding:20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1;}
+.news-panel-title{font-size:18px;font-weight:900;color:var(--gold-light);display:flex;align-items:center;gap:8px;}
+.news-panel-close{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:white;border-radius:8px;width:34px;height:34px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.news-panel-close:hover{background:rgba(192,57,43,0.5);}
+.news-panel-body{padding:16px;}
 .main-wrap{max-width:1280px;margin:0 auto;padding:24px 16px 80px;}
 .verse-banner{background:linear-gradient(135deg,var(--green-deep),var(--green-dark) 60%,var(--green-mid));border-radius:var(--r-md);padding:24px 28px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden;border:1px solid rgba(201,168,76,0.2);}
 .verse-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,rgba(201,168,76,0.12),transparent 60%);}
@@ -343,11 +357,11 @@ tbody tr:last-child td{border-bottom:none;}
       <a class="nav-item" onclick="showAdminSec('students')" id="an-students">📚 الطلاب</a>
       <a class="nav-item" onclick="showAdminSec('teachers')" id="an-teachers">👳 المدرّسون</a>
       <a class="nav-item" onclick="showAdminSec('sessions')" id="an-sessions">📅 الحلقات</a>
-      <a class="nav-item" onclick="showAdminSec('news')" id="an-news">📰 الأخبار</a>
       <a class="nav-item" onclick="showAdminSec('notify')" id="an-notify">🔔 التبليغات</a>
       <a class="nav-item" onclick="showAdminSec('exams')" id="an-exams">📝 الاختبارات</a>
       <a class="nav-item" onclick="showAdminSec('settings')" id="an-settings">⚙️ الإعدادات</a>
       <div class="nav-brand">📖 بيجي</div>
+      <button class="nav-news-icon" onclick="showAdminSec('news')" title="الأخبار والإعلانات">📰<span class="news-badge" id="adminNewsBadge"></span></button>
       <button class="nav-logout" onclick="logout()">خروج 🚪</button>
     </div>
   </nav>
@@ -355,8 +369,8 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="bnav-inner">
       <div class="bnav-item active" onclick="showAdminSec('home');setActiveNav(this)"><div class="bnav-icon">🏠</div>الرئيسية</div>
       <div class="bnav-item" onclick="showAdminSec('students');setActiveNav(this)"><div class="bnav-icon">📚</div>الطلاب</div>
+      <div class="bnav-item" onclick="showAdminSec('teachers');setActiveNav(this)"><div class="bnav-icon">👳</div>مدرّسون</div>
       <div class="bnav-item" onclick="showAdminSec('sessions');setActiveNav(this)"><div class="bnav-icon">📅</div>الحلقات</div>
-      <div class="bnav-item" onclick="showAdminSec('news');setActiveNav(this)"><div class="bnav-icon">📰</div>الأخبار</div>
       <div class="bnav-item" onclick="showAdminSec('settings');setActiveNav(this)"><div class="bnav-icon">⚙️</div>إعدادات</div>
     </div>
   </div>
@@ -373,6 +387,7 @@ tbody tr:last-child td{border-bottom:none;}
       <a class="nav-item" onclick="showTeacherSec('notify')" id="tn-notify">🔔 تبليغات</a>
       <a class="nav-item" onclick="showTeacherSec('requests')" id="tn-requests">📋 الطلبات</a>
       <div class="nav-brand">📖 بيجي</div>
+      <button class="nav-news-icon" onclick="openNewsPanel()" title="الأخبار والإعلانات">📰<span class="news-badge" id="teacherNewsBadge"></span></button>
       <button class="nav-logout" onclick="logout()">خروج 🚪</button>
     </div>
   </nav>
@@ -398,6 +413,7 @@ tbody tr:last-child td{border-bottom:none;}
       <a class="nav-item" onclick="showStudentSec('teachers')" id="sn-teachers">👳 المدرّسون</a>
       <a class="nav-item" onclick="showStudentSec('notifications')" id="sn-notif">🔔 الإشعارات</a>
       <div class="nav-brand">📖 بيجي</div>
+      <button class="nav-news-icon" onclick="openNewsPanel()" title="الأخبار والإعلانات">📰<span class="news-badge" id="studentNewsBadge"></span></button>
       <button class="nav-logout" onclick="logout()">خروج 🚪</button>
     </div>
   </nav>
@@ -405,8 +421,8 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="bnav-inner">
       <div class="bnav-item active" onclick="showStudentSec('home');setActiveNavSt(this)"><div class="bnav-icon">🏠</div>الرئيسية</div>
       <div class="bnav-item" onclick="showStudentSec('progress');setActiveNavSt(this)"><div class="bnav-icon">📖</div>حفظي</div>
-      <div class="bnav-item" onclick="showStudentSec('schedule');setActiveNavSt(this)"><div class="bnav-icon">📅</div>الجدول</div>
       <div class="bnav-item" onclick="showStudentSec('teachers');setActiveNavSt(this)"><div class="bnav-icon">👳</div>مدرّسون</div>
+      <div class="bnav-item" onclick="openNewsPanel()" style="position:relative"><div class="bnav-icon">📰<span class="news-badge" id="studentNewsBadgeMob" style="top:-2px;right:-2px"></span></div>الأخبار</div>
       <div class="bnav-item" onclick="showStudentSec('notifications');setActiveNavSt(this)"><div class="bnav-icon">🔔</div>إشعارات</div>
     </div>
   </div>
@@ -698,11 +714,22 @@ tbody tr:last-child td{border-bottom:none;}
   </div>
 </div>
 
+<!-- News Sliding Panel -->
+<div id="newsPanelOverlay" onclick="closeNewsPanel()"></div>
+<div id="newsPanel">
+  <div class="news-panel-header">
+    <div class="news-panel-title">📰 الأخبار والإعلانات</div>
+    <button class="news-panel-close" onclick="closeNewsPanel()">✕</button>
+  </div>
+  <div class="news-panel-body" id="newsPanelContent"></div>
+</div>
+
 <script>
 // ═══════════════════════════════════════
 // DATA STORE
 // ═══════════════════════════════════════
 const STORE_KEY = 'beeji_data_v3';
+const SESSION_KEY = 'beeji_session_v1';
 
 function defaultData() {
   return {
@@ -760,42 +787,6 @@ saveData(DB);
 
 let currentUser = null;
 let currentRole = null;
-let navHistory = []; // تاريخ التنقل للرجوع
-
-// ═══════════════════════════════════════
-// SESSION PERSISTENCE
-// ═══════════════════════════════════════
-const SESSION_KEY = 'beeji_session';
-function saveSession(role,userId){ localStorage.setItem(SESSION_KEY,JSON.stringify({role,userId,ts:Date.now()})); }
-function clearSession(){ localStorage.removeItem(SESSION_KEY); }
-function restoreSession(){
-  try{
-    const s=JSON.parse(localStorage.getItem(SESSION_KEY));
-    if(!s) return false;
-    if(Date.now()-s.ts > 30*24*60*60*1000){ clearSession(); return false; }
-    if(s.role==='admin'){
-      const u=DB.admins.find(a=>a.id===s.userId);
-      if(!u) return false;
-      currentUser=u; currentRole='admin';
-      showPage('adminDash'); showAdminSec('home'); checkMobile(); return true;
-    } else if(s.role==='teacher'){
-      const u=DB.teachers.find(t=>t.id===s.userId);
-      if(!u||!u.active) return false;
-      currentUser=u; currentRole='teacher';
-      showPage('teacherDash'); showTeacherSec('home');
-      if(window.innerWidth<=640) document.getElementById('bottomNavT').style.display='block';
-      return true;
-    } else if(s.role==='student'){
-      const u=DB.students.find(s2=>s2.id===s.userId);
-      if(!u||!u.active) return false;
-      currentUser=u; currentRole='student';
-      showPage('studentDash'); showStudentSec('home');
-      if(window.innerWidth<=640) document.getElementById('bottomNavSt').style.display='block';
-      return true;
-    }
-  } catch(e){}
-  return false;
-}
 
 const SURAHS = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"];
 
@@ -809,7 +800,38 @@ const SURAHS = ["الفاتحة","البقرة","آل عمران","النساء"
 function hideSplash(){
   const s=document.getElementById('splash');
   s.style.transition='opacity 0.5s'; s.style.opacity='0';
-  setTimeout(()=>{ s.style.display='none'; if(!restoreSession()) showLogin(); },500);
+  setTimeout(()=>{ s.style.display='none'; tryRestoreSession(); },500);
+}
+
+function saveSession(){
+  if(currentUser&&currentRole){
+    const sess={role:currentRole, userId:currentUser.id, ts:Date.now()};
+    localStorage.setItem(SESSION_KEY,JSON.stringify(sess));
+  }
+}
+function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+function tryRestoreSession(){
+  try{
+    const raw=localStorage.getItem(SESSION_KEY);
+    if(!raw){ showLogin(); return; }
+    const sess=JSON.parse(raw);
+    // Session expires after 30 days
+    if(Date.now()-sess.ts > 30*24*60*60*1000){ clearSession(); showLogin(); return; }
+    if(sess.role==='admin'){
+      const admin=DB.admins.find(a=>a.id===sess.userId);
+      if(admin){ currentUser=admin; currentRole='admin'; showPage('adminDash'); showAdminSec('home'); checkMobile(); return; }
+    } else if(sess.role==='teacher'){
+      const teacher=DB.teachers.find(t=>t.id===sess.userId);
+      if(teacher&&teacher.active){ currentUser=teacher; currentRole='teacher'; showPage('teacherDash'); showTeacherSec('home');
+        if(window.innerWidth<=640) document.getElementById('bottomNavT').style.display='block'; return; }
+    } else if(sess.role==='student'){
+      const st=DB.students.find(s=>s.id===sess.userId);
+      if(st&&st.active){ currentUser=st; currentRole='student'; showPage('studentDash'); showStudentSec('home');
+        if(window.innerWidth<=640) document.getElementById('bottomNavSt').style.display='block'; return; }
+    }
+  } catch(e){}
+  clearSession(); showLogin();
 }
 
 // ═══════════════════════════════════════
@@ -825,61 +847,11 @@ function showLogin(){ showPage('loginPage'); }
 
 function logout(){
   if(!confirm('هل تريد تسجيل الخروج؟')) return;
-  currentUser=null; currentRole=null; navHistory=[];
-  clearSession();
+  currentUser=null; currentRole=null; clearSession();
   showLogin();
   ['adminLoginForm','teacherLoginForm','studentSection'].forEach(id=>document.getElementById(id).classList.add('hidden'));
   document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));
   clearMsg();
-}
-
-// ─── Back Button Handler ───
-window.addEventListener('popstate', ()=>{
-  // إذا كان هناك تاريخ تنقل → ارجع للصفحة السابقة
-  if(navHistory.length > 1){
-    navHistory.pop(); // أزل الصفحة الحالية
-    const prev = navHistory[navHistory.length-1];
-    if(prev){
-      if(currentRole==='admin') showAdminSecNoHistory(prev);
-      else if(currentRole==='teacher') showTeacherSecNoHistory(prev);
-      else if(currentRole==='student') showStudentSecNoHistory(prev);
-    }
-  } else if(currentRole){
-    // لا يوجد تاريخ → اذهب للرئيسية بدل الخروج
-    history.pushState(null,'',location.href);
-    if(currentRole==='admin') showAdminSecNoHistory('home');
-    else if(currentRole==='teacher') showTeacherSecNoHistory('home');
-    else showStudentSecNoHistory('home');
-    navHistory=['home'];
-  } else {
-    history.pushState(null,'',location.href);
-  }
-});
-
-// دفع حالة في التاريخ عند كل تنقل
-function pushNav(sec){
-  navHistory.push(sec);
-  history.pushState({sec}, '', location.href);
-}
-
-// نسخ showAdminSec بدون تسجيل تاريخ (للرجوع)
-function showAdminSecNoHistory(sec){
-  document.querySelectorAll('#navbar .nav-item').forEach(el=>el.classList.toggle('active',el.id==='an-'+sec));
-  const el=document.getElementById('adminContent');
-  el.style.opacity='0';
-  setTimeout(()=>{ el.innerHTML=buildAdminSec(sec); el.style.transition='opacity 0.3s'; el.style.opacity='1'; },150);
-}
-function showTeacherSecNoHistory(sec){
-  ['home','halqa','schedule','notify','requests'].forEach(s=>{ const el=document.getElementById('tn-'+s); if(el) el.classList.toggle('active',s===sec); });
-  const el=document.getElementById('teacherContent');
-  el.style.opacity='0';
-  setTimeout(()=>{ el.innerHTML=buildTeacherSec(sec); el.style.opacity='1'; },150);
-}
-function showStudentSecNoHistory(sec){
-  ['home','progress','schedule','teachers','notifications'].forEach(s=>{ const el=document.getElementById('sn-'+s); if(el) el.classList.toggle('active',s===sec); });
-  const el=document.getElementById('studentContent');
-  el.style.opacity='0';
-  setTimeout(()=>{ el.innerHTML=buildStudentSec(sec); el.style.opacity='1'; },150);
 }
 
 function selectRole(role){
@@ -905,7 +877,7 @@ function adminLogin(){
   const email=document.getElementById('adminEmail').value.trim();
   const pin=document.getElementById('adminPin').value.trim();
   const admin=DB.admins.find(a=>a.email===email&&a.pin===pin);
-  if(admin){ currentUser=admin; currentRole='admin'; saveSession('admin',admin.id); navHistory=[]; history.pushState(null,'',location.href); showPage('adminDash'); showAdminSec('home'); checkMobile(); }
+  if(admin){ currentUser=admin; currentRole='admin'; saveSession(); showPage('adminDash'); showAdminSec('home'); checkMobile(); }
   else{ showMsg('❌ البريد أو الرمز غير صحيح'); document.getElementById('adminPin').value=''; }
 }
 
@@ -915,8 +887,7 @@ function teacherLogin(){
   const teacher=DB.teachers.find(t=>t.username===user&&t.password===pass);
   if(teacher){
     if(!teacher.active){ showMsg('❌ حسابك موقوف. تواصل مع الإدارة'); return; }
-    currentUser=teacher; currentRole='teacher';
-    saveSession('teacher',teacher.id); navHistory=[]; history.pushState(null,'',location.href);
+    currentUser=teacher; currentRole='teacher'; saveSession();
     showPage('teacherDash'); showTeacherSec('home');
     if(window.innerWidth<=640) document.getElementById('bottomNavT').style.display='block';
   } else { showMsg('❌ اسم المستخدم أو كلمة المرور غير صحيحة'); }
@@ -928,10 +899,9 @@ function studentLogin(){
   const st=DB.students.find(s=>s.username===user&&s.password===pass);
   if(st){
     if(!st.active){ showMsg('❌ حسابك موقوف. تواصل مع إدارة المقرأة'); return; }
-    currentUser=st; currentRole='student';
+    currentUser=st; currentRole='student'; saveSession();
     st.lastLogin=new Date().toISOString().split('T')[0];
     saveData(DB);
-    saveSession('student',st.id); navHistory=[]; history.pushState(null,'',location.href);
     showPage('studentDash'); showStudentSec('home');
     if(window.innerWidth<=640) document.getElementById('bottomNavSt').style.display='block';
   } else { showMsg('❌ اسم المستخدم أو كلمة المرور غير صحيحة'); }
@@ -954,8 +924,10 @@ function closeModal(id){ document.getElementById(id).classList.remove('open'); }
 // ADMIN SECTIONS
 // ═══════════════════════════════════════
 function showAdminSec(sec){
-  pushNav(sec);
-  showAdminSecNoHistory(sec);
+  document.querySelectorAll('#navbar .nav-item').forEach(el=>el.classList.toggle('active',el.id==='an-'+sec));
+  const el=document.getElementById('adminContent');
+  el.style.opacity='0';
+  setTimeout(()=>{ el.innerHTML=buildAdminSec(sec); el.style.transition='opacity 0.3s'; el.style.opacity='1'; updateNewsBadge(); },150);
 }
 function buildAdminSec(sec){
   switch(sec){
@@ -1081,88 +1053,72 @@ function rerenderStudents(q){
     </div>`).join('')||'<div class="empty-state" style="background:white;border-radius:12px;padding:30px"><div class="empty-msg">لا توجد نتائج</div></div>';
 }
 
-
 // ─── TEACHERS ───
 function buildAdminTeachers(){
-  const male=DB.teachers.filter(t=>(t.gender||'male')==='male');
+  const male=DB.teachers.filter(t=>t.gender==='male'||(t.gender||'male')==='male');
   const female=DB.teachers.filter(t=>t.gender==='female');
 
-  function renderRow(t){
-    const studCount=DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0);
-    return `
-    <div class="teacher-card anim-fade-up">
-      <div class="t-avatar">${t.emoji}</div>
-      <div style="flex:1;min-width:0">
-        <div class="t-name">${t.name}</div>
-        <div class="t-subject">📖 ${t.subject}</div>
-        <div style="font-size:12px;color:var(--text-soft);margin-top:4px;display:flex;flex-wrap:wrap;gap:10px">
-          <span>👤 @${t.username||'—'}</span>
-          <span>📞 ${t.phone||'—'}</span>
-          <span>🕐 ${t.times||'—'}</span>
-          <span>📅 خبرة: ${t.exp} سنة</span>
-          <span>👥 ${studCount}/${t.maxStudents} طالب</span>
-          <span>${'⭐'.repeat(t.rating||4)}</span>
+  function renderCard(t){ return `
+    <div class="teacher-full-card anim-fade-up">
+      <div class="tcf-header">
+        <div class="tcf-avatar">${t.emoji}</div>
+        <div class="tcf-name">${t.name}</div>
+        <div class="tcf-subject">${t.subject}</div>
+        <div style="margin-top:4px;font-size:12px;color:var(--gold-light)">@${t.username}</div>
+      </div>
+      <div class="tcf-body">
+        <div class="tcf-stat">
+          <div class="tcf-stat-item"><div class="tcf-stat-num">${t.exp}</div><div class="tcf-stat-lbl">سنوات خبرة</div></div>
+          <div class="tcf-stat-item"><div class="tcf-stat-num">${DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0)}</div><div class="tcf-stat-lbl">الطلاب</div></div>
+          <div class="tcf-stat-item"><div class="tcf-stat-num">${t.rating||4}/5</div><div class="tcf-stat-lbl">التقييم</div></div>
         </div>
-        ${t.bio?`<p style="font-size:12px;color:var(--text-med);margin-top:6px;line-height:1.7">${t.bio}</p>`:''}
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <p style="font-size:13px;color:var(--text-med);line-height:1.7;margin-bottom:12px">${t.bio}</p>
+        <div style="font-size:12px;color:var(--text-soft);margin-bottom:10px">
+          <div>📞 ${t.phone}</div><div>📧 ${t.email}</div><div>🕐 ${t.times}</div>
+          <div>👥 الحد الأقصى: ${t.maxStudents} طالب</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
           <span class="badge ${t.active?'badge-active':'badge-off'}">${t.active?'✅ نشط':'❌ غير نشط'}</span>
           <button class="btn btn-outline btn-xs" onclick="openEditTeacher(${t.id})">✏️ تعديل</button>
-          <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd"
-            onclick="showCredentialsModal(encodeURIComponent('${t.name.replace(/'/g,"\\'")}'),'${t.username||''}','${t.password||''}')">🔑 بيانات الدخول</button>
+          <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd" onclick="showCredentialsModal(encodeURIComponent('${t.name}'),'${t.username||''}','${t.password||''}')">🔑 الدخول</button>
           <button class="btn btn-danger btn-xs" onclick="deleteTeacher(${t.id})">🗑️ حذف</button>
         </div>
       </div>
-    </div>`;
-  }
+    </div>`; }
 
   return `
   <div class="sec-header">
     <div class="sec-title">👳 المدرّسون</div>
     <button class="btn btn-gold" onclick="openModal('modalAddTeacher')">+ إضافة مدرّس</button>
   </div>
-
   <div class="gender-section-header">👨‍🏫 المدرّسون (ذكور)</div>
-  <div class="panel" style="margin-bottom:18px">
-    ${male.length ? male.map(renderRow).join('') :
-      '<div class="empty-state" style="padding:20px"><div class="empty-msg">لا يوجد مدرّسون ذكور</div></div>'}
-  </div>
-
-  <div class="gender-section-header" style="background:linear-gradient(135deg,#7c3aed,#9d5fe8)">
-    👩‍🏫 المدرّسات (إناث)
-  </div>
-  <div class="panel" style="margin-bottom:18px">
-    ${female.length ? female.map(renderRow).join('') :
-      '<div class="empty-state" style="padding:20px"><div class="empty-msg">لا توجد مدرّسات</div></div>'}
-  </div>
-
-  <div class="panel">
+  <div class="three-col" style="margin-bottom:20px">${male.length?male.map(renderCard).join(''):'<p style="color:white">لا يوجد مدرّسون ذكور</p>'}</div>
+  <div class="gender-section-header" style="background:linear-gradient(135deg,#7c3aed,#9d5fe8)">👩‍🏫 المدرّسات (إناث)</div>
+  <div class="three-col">${female.length?female.map(renderCard).join(''):'<p style="color:white">لا توجد مدرّسات</p>'}</div>
+  <div class="panel" style="margin-top:20px">
     <div class="panel-title"><span class="panel-title-txt">📅 جدول المدرّسين</span></div>
     <div class="tbl-wrap">
       <table>
-        <thead>
-          <tr><th>المدرّس</th><th>التخصص</th><th>الوقت</th><th>الطلاب</th><th>إجراء</th></tr>
-        </thead>
+        <thead><tr><th>المدرّس</th><th>التخصص</th><th>الوقت</th><th>عدد الطلاب</th><th>إجراء</th></tr></thead>
         <tbody>
-          ${DB.teachers.map(t=>{
-            const cnt=DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0);
-            return `<tr>
+          ${DB.teachers.map(t=>`
+            <tr>
               <td>${t.emoji} ${t.name}</td>
               <td>${t.subject}</td>
               <td>${t.times}</td>
-              <td>${cnt} / ${t.maxStudents}</td>
-              <td><div style="display:flex;gap:4px">
+              <td>${DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0)} / ${t.maxStudents}</td>
+              <td style="display:flex;gap:4px">
                 <button class="btn btn-xs btn-outline" onclick="openEditTeacher(${t.id})">✏️</button>
-                <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd"
-                  onclick="showCredentialsModal(encodeURIComponent('${t.name.replace(/'/g,"\\'")}'),'${t.username||''}','${t.password||''}')">🔑</button>
+                <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd" onclick="showCredentialsModal(encodeURIComponent('${t.name}'),'${t.username||''}','${t.password||''}')">🔑</button>
                 <button class="btn btn-xs btn-danger" onclick="deleteTeacher(${t.id})">🗑️</button>
-              </div></td>
-            </tr>`;
-          }).join('')}
+              </td>
+            </tr>`).join('')}
         </tbody>
       </table>
     </div>
   </div>`;
 }
+
 // ─── NEWS ───
 function buildAdminNews(){
   const cards=[...DB.news].reverse().map(n=>`
@@ -1323,8 +1279,13 @@ function buildAdminSettings(){
 // TEACHER SECTIONS
 // ═══════════════════════════════════════
 function showTeacherSec(sec){
-  pushNav(sec);
-  showTeacherSecNoHistory(sec);
+  ['home','halqa','schedule','notify','requests'].forEach(s=>{
+    const el=document.getElementById('tn-'+s);
+    if(el) el.classList.toggle('active',s===sec);
+  });
+  const el=document.getElementById('teacherContent');
+  el.style.opacity='0';
+  setTimeout(()=>{ el.innerHTML=buildTeacherSec(sec); el.style.opacity='1'; },150);
 }
 function buildTeacherSec(sec){
   switch(sec){
@@ -1485,8 +1446,13 @@ function buildTeacherRequests(){
 // STUDENT SECTIONS
 // ═══════════════════════════════════════
 function showStudentSec(sec){
-  pushNav(sec);
-  showStudentSecNoHistory(sec);
+  ['home','progress','schedule','teachers','notifications'].forEach(s=>{
+    const el=document.getElementById('sn-'+s);
+    if(el) el.classList.toggle('active',s===sec);
+  });
+  const el=document.getElementById('studentContent');
+  el.style.opacity='0';
+  setTimeout(()=>{ el.innerHTML=buildStudentSec(sec); el.style.opacity='1'; },150);
 }
 function buildStudentSec(sec){
   switch(sec){
@@ -2080,6 +2046,38 @@ function saveProgress(){
 }
 
 // ═══════════════════════════════════════
+// NEWS PANEL
+// ═══════════════════════════════════════
+function openNewsPanel(){
+  const news=[...DB.news].reverse();
+  const content=news.length?news.map(n=>`
+    <div class="news-card ${n.pinned?'pinned':''}" onclick="openViewNews(${n.id})">
+      <div class="news-title">${n.pinned?'<span class="tag tag-pinned">📌</span> ':''}${n.title}</div>
+      <div class="news-body">${n.body.substring(0,120)}...</div>
+      <div class="news-meta"><span class="tag tag-green">${n.cat}</span><span>📅 ${n.date}</span></div>
+    </div>`).join('')
+    :'<div style="text-align:center;padding:40px 20px;color:var(--text-soft)"><div style="font-size:48px;margin-bottom:12px">📭</div><div style="font-weight:700">لا توجد أخبار حالياً</div></div>';
+  document.getElementById('newsPanelContent').innerHTML=
+    (currentRole==='admin'?`<button class="btn btn-gold btn-full" style="margin-bottom:16px" onclick="closeNewsPanel();showAdminSec('news')">⚙️ إدارة الأخبار</button>`:'')
+    + content;
+  document.getElementById('newsPanelOverlay').classList.add('open');
+  document.getElementById('newsPanel').classList.add('open');
+  // Update badge counts
+  updateNewsBadge();
+}
+function closeNewsPanel(){
+  document.getElementById('newsPanelOverlay').classList.remove('open');
+  document.getElementById('newsPanel').classList.remove('open');
+}
+function updateNewsBadge(){
+  const count=DB.news.length;
+  document.querySelectorAll('.news-badge').forEach(b=>{
+    b.textContent=count>9?'9+':count;
+    b.classList.toggle('show',count>0);
+  });
+}
+
+// ═══════════════════════════════════════
 // TOAST
 // ═══════════════════════════════════════
 function showToast(msg,type='success'){
@@ -2109,7 +2107,7 @@ let deferredPrompt;
 window.addEventListener('beforeinstallprompt',(e)=>{ e.preventDefault(); deferredPrompt=e; document.getElementById('installBanner').classList.remove('hidden'); });
 document.getElementById('installBtn')?.addEventListener('click',async()=>{ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; document.getElementById('installBanner').classList.add('hidden'); } });
 window.addEventListener('appinstalled',()=>{ document.getElementById('installBanner').classList.add('hidden'); });
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
 
 // ENTER KEY
 document.addEventListener('keydown',e=>{
