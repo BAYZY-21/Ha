@@ -2,7 +2,8 @@
   "name": "مقرأة بيجي لتعليم القرآن الكريم",
   "short_name": "بيجي القرآن",
   "description": "مقرأة بيجي لتعليم القرآن الكريم وعلومه",
-  "start_url": "./index.html",
+  "start_url": "/Ha/index.html",
+  "scope": "/Ha/",
   "display": "standalone",
   "background_color": "#061E14",
   "theme_color": "#0D3B2E",
@@ -11,7 +12,7 @@
   "dir": "rtl",
   "icons": [
     {
-      "src": "icon.svg",
+      "src": "/Ha/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
