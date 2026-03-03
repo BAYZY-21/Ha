@@ -1081,72 +1081,88 @@ function rerenderStudents(q){
     </div>`).join('')||'<div class="empty-state" style="background:white;border-radius:12px;padding:30px"><div class="empty-msg">لا توجد نتائج</div></div>';
 }
 
+
 // ─── TEACHERS ───
 function buildAdminTeachers(){
-  const male=DB.teachers.filter(t=>t.gender==='male'||(t.gender||'male')==='male');
+  const male=DB.teachers.filter(t=>(t.gender||'male')==='male');
   const female=DB.teachers.filter(t=>t.gender==='female');
 
-  function renderCard(t){ return `
-    <div class="teacher-full-card anim-fade-up">
-      <div class="tcf-header">
-        <div class="tcf-avatar">${t.emoji}</div>
-        <div class="tcf-name">${t.name}</div>
-        <div class="tcf-subject">${t.subject}</div>
-        <div style="margin-top:4px;font-size:12px;color:var(--gold-light)">@${t.username}</div>
-      </div>
-      <div class="tcf-body">
-        <div class="tcf-stat">
-          <div class="tcf-stat-item"><div class="tcf-stat-num">${t.exp}</div><div class="tcf-stat-lbl">سنوات خبرة</div></div>
-          <div class="tcf-stat-item"><div class="tcf-stat-num">${DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0)}</div><div class="tcf-stat-lbl">الطلاب</div></div>
-          <div class="tcf-stat-item"><div class="tcf-stat-num">${t.rating||4}/5</div><div class="tcf-stat-lbl">التقييم</div></div>
+  function renderRow(t){
+    const studCount=DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0);
+    return `
+    <div class="teacher-card anim-fade-up">
+      <div class="t-avatar">${t.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div class="t-name">${t.name}</div>
+        <div class="t-subject">📖 ${t.subject}</div>
+        <div style="font-size:12px;color:var(--text-soft);margin-top:4px;display:flex;flex-wrap:wrap;gap:10px">
+          <span>👤 @${t.username||'—'}</span>
+          <span>📞 ${t.phone||'—'}</span>
+          <span>🕐 ${t.times||'—'}</span>
+          <span>📅 خبرة: ${t.exp} سنة</span>
+          <span>👥 ${studCount}/${t.maxStudents} طالب</span>
+          <span>${'⭐'.repeat(t.rating||4)}</span>
         </div>
-        <p style="font-size:13px;color:var(--text-med);line-height:1.7;margin-bottom:12px">${t.bio}</p>
-        <div style="font-size:12px;color:var(--text-soft);margin-bottom:10px">
-          <div>📞 ${t.phone}</div><div>📧 ${t.email}</div><div>🕐 ${t.times}</div>
-          <div>👥 الحد الأقصى: ${t.maxStudents} طالب</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${t.bio?`<p style="font-size:12px;color:var(--text-med);margin-top:6px;line-height:1.7">${t.bio}</p>`:''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
           <span class="badge ${t.active?'badge-active':'badge-off'}">${t.active?'✅ نشط':'❌ غير نشط'}</span>
           <button class="btn btn-outline btn-xs" onclick="openEditTeacher(${t.id})">✏️ تعديل</button>
-          <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd" onclick="showCredentialsModal(encodeURIComponent('${t.name}'),'${t.username||''}','${t.password||''}')">🔑 الدخول</button>
+          <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd"
+            onclick="showCredentialsModal(encodeURIComponent('${t.name.replace(/'/g,"\\'")}'),'${t.username||''}','${t.password||''}')">🔑 بيانات الدخول</button>
           <button class="btn btn-danger btn-xs" onclick="deleteTeacher(${t.id})">🗑️ حذف</button>
         </div>
       </div>
-    </div>`; }
+    </div>`;
+  }
 
   return `
   <div class="sec-header">
     <div class="sec-title">👳 المدرّسون</div>
     <button class="btn btn-gold" onclick="openModal('modalAddTeacher')">+ إضافة مدرّس</button>
   </div>
+
   <div class="gender-section-header">👨‍🏫 المدرّسون (ذكور)</div>
-  <div class="three-col" style="margin-bottom:20px">${male.length?male.map(renderCard).join(''):'<p style="color:white">لا يوجد مدرّسون ذكور</p>'}</div>
-  <div class="gender-section-header" style="background:linear-gradient(135deg,#7c3aed,#9d5fe8)">👩‍🏫 المدرّسات (إناث)</div>
-  <div class="three-col">${female.length?female.map(renderCard).join(''):'<p style="color:white">لا توجد مدرّسات</p>'}</div>
-  <div class="panel" style="margin-top:20px">
+  <div class="panel" style="margin-bottom:18px">
+    ${male.length ? male.map(renderRow).join('') :
+      '<div class="empty-state" style="padding:20px"><div class="empty-msg">لا يوجد مدرّسون ذكور</div></div>'}
+  </div>
+
+  <div class="gender-section-header" style="background:linear-gradient(135deg,#7c3aed,#9d5fe8)">
+    👩‍🏫 المدرّسات (إناث)
+  </div>
+  <div class="panel" style="margin-bottom:18px">
+    ${female.length ? female.map(renderRow).join('') :
+      '<div class="empty-state" style="padding:20px"><div class="empty-msg">لا توجد مدرّسات</div></div>'}
+  </div>
+
+  <div class="panel">
     <div class="panel-title"><span class="panel-title-txt">📅 جدول المدرّسين</span></div>
     <div class="tbl-wrap">
       <table>
-        <thead><tr><th>المدرّس</th><th>التخصص</th><th>الوقت</th><th>عدد الطلاب</th><th>إجراء</th></tr></thead>
+        <thead>
+          <tr><th>المدرّس</th><th>التخصص</th><th>الوقت</th><th>الطلاب</th><th>إجراء</th></tr>
+        </thead>
         <tbody>
-          ${DB.teachers.map(t=>`
-            <tr>
+          ${DB.teachers.map(t=>{
+            const cnt=DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0);
+            return `<tr>
               <td>${t.emoji} ${t.name}</td>
               <td>${t.subject}</td>
               <td>${t.times}</td>
-              <td>${DB.sessions.filter(s=>s.teacherId===t.id).reduce((a,s)=>a+s.studentIds.length,0)} / ${t.maxStudents}</td>
-              <td style="display:flex;gap:4px">
+              <td>${cnt} / ${t.maxStudents}</td>
+              <td><div style="display:flex;gap:4px">
                 <button class="btn btn-xs btn-outline" onclick="openEditTeacher(${t.id})">✏️</button>
-                <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd" onclick="showCredentialsModal(encodeURIComponent('${t.name}'),'${t.username||''}','${t.password||''}')">🔑</button>
+                <button class="btn btn-xs" style="background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd"
+                  onclick="showCredentialsModal(encodeURIComponent('${t.name.replace(/'/g,"\\'")}'),'${t.username||''}','${t.password||''}')">🔑</button>
                 <button class="btn btn-xs btn-danger" onclick="deleteTeacher(${t.id})">🗑️</button>
-              </td>
-            </tr>`).join('')}
+              </div></td>
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>
   </div>`;
 }
-
 // ─── NEWS ───
 function buildAdminNews(){
   const cards=[...DB.news].reverse().map(n=>`
