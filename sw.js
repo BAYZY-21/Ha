@@ -1,4 +1,4 @@
-const CACHE_NAME = 'beeji-quran-v42026';
+const CACHE_NAME = 'beeji-quran-v52026';
 const ASSETS = [
   './',
   './index.html',
