@@ -1090,7 +1090,10 @@ function buildAdminHome(){
   </div>
   <div class="sec-header">
     <div class="sec-title">لوحة التحكم</div>
-    <div style="font-size:14px;color:rgba(255,255,255,0.7)">أهلاً، <strong style="color:var(--gold)">${currentUser.name}</strong> 👋</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="font-size:14px;color:rgba(255,255,255,0.7)">أهلاً، <strong style="color:var(--gold)">${currentUser.name}</strong> 👋</div>
+      <button onclick="logout()" style="padding:8px 16px;border-radius:10px;background:rgba(192,57,43,0.25);color:#ff8a80;border:1px solid rgba(192,57,43,0.4);cursor:pointer;font-size:13px;font-weight:700;font-family:'Cairo',sans-serif;transition:all 0.2s;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(192,57,43,0.5)';this.style.color='white'" onmouseout="this.style.background='rgba(192,57,43,0.25)';this.style.color='#ff8a80'">🚪 خروج</button>
+    </div>
   </div>
 
   <!-- إحصائيات سريعة -->
